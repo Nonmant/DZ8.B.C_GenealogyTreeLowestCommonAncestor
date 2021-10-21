@@ -4,16 +4,16 @@
 #include <bits/stdc++.h>
 
 struct TreeNode{
-    std::vector<TreeNode *> children;
+    std::unordered_set<TreeNode *> children;
     std::string name;
     explicit TreeNode(const std::string & name):
             name(name){};
 
     //! @return true if added, false otherwise
-    bool add(const std::string & child,
+    bool add(TreeNode * child,
              const std::string & parent){
         if(parent == name){
-            children.push_back(new TreeNode(child));
+            children.insert(child);
             return true;
         }
         for(auto & myChild : children){
@@ -58,39 +58,59 @@ struct TreeNode{
         return -1;
     }
     ~TreeNode(){
-        auto i = children.size();
-        while (i--){
-            delete children[i];
+        for(auto child : children){
+            delete child;
         }
+        children.clear();
     }
 };
 
 struct Tree{
-    TreeNode * root;
+    std::unordered_set<TreeNode *> roots;
 public:
-    Tree(): root(nullptr){}
 
     void add(const std::string & child,
              const std::string & parent){
-        if(root == nullptr){
-            root = new TreeNode(parent);
+        TreeNode * hangingNode = nullptr;
+        for(auto root : roots){
+            if(child == root->name){
+                hangingNode = root;
+                roots.erase(root);
+                break;
+            }
         }
-        root->add(child,parent);
+        if(hangingNode == nullptr)
+            hangingNode = new TreeNode(child);
+        for(auto root : roots){
+            if(root->add(hangingNode,parent))
+                return;
+        }
+
+        auto addedRoot = new TreeNode(parent);
+        addedRoot->add(hangingNode, parent);
+        roots.insert(addedRoot);
     }
 
     [[nodiscard]]
     int getRelationship(const std::string & first,
                         const std::string & second) const{
-        if(root == nullptr)
-            return 0;
-        int rv =  root->getRelationship(first,second);
+        int rv = -1;
+        for(auto root : roots){
+            rv = root->getRelationship(first,second);
+            if(rv!=-1)
+                break;
+        }
         if(rv == -1)
             return 0;
         return rv;
     }
 
     ~Tree(){
-        delete root;
+        for(auto root : roots){
+            delete root;
+        }
+        roots.clear();
+        roots.clear();
     }
 };
 

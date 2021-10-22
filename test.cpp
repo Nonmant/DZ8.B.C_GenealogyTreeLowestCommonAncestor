@@ -39,7 +39,7 @@ TEST_CASE("test 1, file", "[simple]"){
                             "Peter_I\n"
                             "Anna\n");
 }
-
+/*
 TEST_CASE("test 014", ""){
     BENCHMARK("Longest file"){
     std::ifstream input( "../014", std::ofstream::in);
@@ -192,4 +192,4 @@ TEST_CASE("middle 2 brothers", ""){
             "C\n"
     );
 }
-
+*/

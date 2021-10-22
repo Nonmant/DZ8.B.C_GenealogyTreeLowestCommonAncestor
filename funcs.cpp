@@ -4,39 +4,26 @@
 #include <bits/stdc++.h>
 
 struct TreeNode{
-    std::unordered_set<TreeNode *> children;
-    std::string name;
-    explicit TreeNode(const std::string & name):
-            name(name){};
+    std::map<const std::string,TreeNode *>children;
 
     //! @return true if added, false otherwise
     bool add(TreeNode * child,
+             const std::string & childName,
              const std::string & parent){
-        if(parent == name){
-            children.insert(child);
-            return true;
+        if(children.count(parent)){
+            children.at(parent)->children[childName] = new TreeNode;
         }
         for(auto & myChild : children){
-            if(myChild->add(child,parent))
+            if(myChild.second->add(child,childName,parent))
                 return true;
         }
         return false;
     }
 
     [[nodiscard]]
-    bool find(const std::string & givenName) const{
-        if(name == givenName)
-            return true;
-        return std::any_of(children.begin(), children.end(),
-                    [givenName](const TreeNode * child){
-                        return child->find(givenName);
-                    });
-    }
-
-    [[nodiscard]]
     std::string getLCA(const std::string & first,
                        const std::string & second){
-        std::list<const TreeNode *> path;
+        std::list<std::pair<const TreeNode *,const std::string &>> path;
         int rv = findAncestorsOfAny(first,second,path);
         if(rv == 0)
             return {};
@@ -44,16 +31,16 @@ struct TreeNode{
                 rv == 1 ? second : first;
         TreeNode const * except = nullptr;
         for(auto node=path.rbegin(); node!=path.rend();++node){
-            if((*node)->find(searching,except))
-                return (*node)->name;
-            except = *node;
+            if((*node).first->find(searching,except))
+                return (*node).second;
+            except = (*node).first;
         }
         return {};
     }
 
     ~TreeNode(){
         for(auto child : children){
-            delete child;
+            delete child.second;
         }
         children.clear();
     }
@@ -62,82 +49,72 @@ protected:
     //! @return 0 - not found, 1 - found first, 2 - found second
     int findAncestorsOfAny(const std::string & first,
                             const std::string & second,
-                            std::list<const TreeNode *> & path) const{
-        path.push_back(this);
-        if(name == first){
+                            std::list<std::pair<const TreeNode *,const std::string &>> & path) const{
+        if(children.count(first)){
+            path.emplace_back(children.at(first),first);
             return 1;
         }
-        if(name == second){
+        if(children.count(first)){
+            path.emplace_back(children.at(second),second);
             return 2;
         }
 
         for(const auto & child: children ){
-            int rv = child->findAncestorsOfAny(first,second,path);
-            if(rv!=0)
+            int rv = child.second->findAncestorsOfAny(first,second,path);
+            if(rv!=0){
+                path.emplace_back(child.second,child.first);
                 return rv;
+            }
+
         }
-        path.pop_back();
         return 0;
+    }
+
+    [[nodiscard]]
+    bool find(const std::string & givenName) const{
+        if(children.count(givenName))
+            return true;
+        for(const auto & child : children){
+            if(child.second->find(givenName))
+                return true;
+        }
+        return false;
     }
 
     [[nodiscard]]
     bool find(const std::string & givenName,
               const TreeNode * except) const{
-        if(name == givenName)
+        if(children.count(givenName))
             return true;
-        return std::any_of(children.begin(), children.end(),
-                           [givenName, &except](const TreeNode * child){
-                               return child != except && child->find(givenName);
-                           });
+        for(const auto & child : children){
+            if(child.second == except)
+                continue;
+            if(child.second->find(givenName))
+                return true;
+        }
+        return false;
     }
 };
 
-struct Tree{
-    std::unordered_set<TreeNode *> roots;
+struct Tree : public TreeNode{
 public:
 
     void add(const std::string & child,
              const std::string & parent){
         TreeNode * hangingNode = nullptr;
-        for(auto root : roots){
-            if(child == root->name){
-                hangingNode = root;
-                roots.erase(root);
-                break;
-            }
+        if(children.count(child)){
+            hangingNode = children[child];
+            children.erase(child);
         }
         if(hangingNode == nullptr)
-            hangingNode = new TreeNode(child);
-        for(auto root : roots){
-            if(root->add(hangingNode,parent))
-                return;
+            hangingNode = new TreeNode;
+        bool added  = TreeNode::add(hangingNode,child,parent);
+        if(!added){
+            children[child] = hangingNode;
         }
-
-        auto addedRoot = new TreeNode(parent);
-        addedRoot->add(hangingNode, parent);
-        roots.insert(addedRoot);
     }
+    };
 
-    [[nodiscard]]
-    std::string getLCA(const std::string & first,
-                       const std::string & second) const {
-        std::string ans;
-        for(auto root : roots){
-            ans = root->getLCA(first,second);
-            if(!ans.empty())
-                return ans;
-        }
-        return ans;
-    }
-
-    ~Tree(){
-        for(auto root : roots){
-            delete root;
-        }
-        roots.clear();
-        roots.clear();
-    }
-};
 
 void parseFile(std::istream & input, std::ostream & output){
     Tree tree;

@@ -34,34 +34,61 @@ struct TreeNode{
     }
 
     [[nodiscard]]
-    int getRelationship(const std::string & first,
-                        const std::string & second) const{
-        if(first == name){
-            if(find(second)){
-                return 1;
-            } else {
-                return 0;
-            }
+    std::string getLCA(const std::string & first,
+                       const std::string & second){
+        std::list<const TreeNode *> path;
+        int rv = findAncestorsOfAny(first,second,path);
+        if(rv == 0)
+            return {};
+        const std::string & searching =
+                rv == 1 ? second : first;
+        TreeNode const * except = nullptr;
+        for(auto node=path.rbegin(); node!=path.rend();++node){
+            if((*node)->find(searching,except))
+                return (*node)->name;
+            except = *node;
         }
-        if(second == name){
-            if(find(first)){
-                return 2;
-            } else {
-                return 0;
-            }
-        }
-        int rv;
-        for(auto & child : children){
-            rv = child->getRelationship(first,second);
-            if(rv >= 0) return rv;
-        }
-        return -1;
+        return {};
     }
+
     ~TreeNode(){
         for(auto child : children){
             delete child;
         }
         children.clear();
+    }
+
+protected:
+    //! @return 0 - not found, 1 - found first, 2 - found second
+    int findAncestorsOfAny(const std::string & first,
+                            const std::string & second,
+                            std::list<const TreeNode *> & path) const{
+        path.push_back(this);
+        if(name == first){
+            return 1;
+        }
+        if(name == second){
+            return 2;
+        }
+
+        for(const auto & child: children ){
+            int rv = child->findAncestorsOfAny(first,second,path);
+            if(rv!=0)
+                return rv;
+        }
+        path.pop_back();
+        return 0;
+    }
+
+    [[nodiscard]]
+    bool find(const std::string & givenName,
+              const TreeNode * except) const{
+        if(name == givenName)
+            return true;
+        return std::any_of(children.begin(), children.end(),
+                           [givenName, &except](const TreeNode * child){
+                               return child != except && child->find(givenName);
+                           });
     }
 };
 
@@ -92,17 +119,15 @@ public:
     }
 
     [[nodiscard]]
-    int getRelationship(const std::string & first,
-                        const std::string & second) const{
-        int rv = -1;
+    std::string getLCA(const std::string & first,
+                       const std::string & second) const {
+        std::string ans;
         for(auto root : roots){
-            rv = root->getRelationship(first,second);
-            if(rv!=-1)
-                break;
+            ans = root->getLCA(first,second);
+            if(!ans.empty())
+                return ans;
         }
-        if(rv == -1)
-            return 0;
-        return rv;
+        return ans;
     }
 
     ~Tree(){
@@ -125,6 +150,6 @@ void parseFile(std::istream & input, std::ostream & output){
         tree.add(firstName,secondName);
     }
     while (input >> firstName >> secondName){
-        output << tree.getRelationship(firstName,secondName) << ' ';
+        output << tree.getLCA(firstName,secondName) << '\n';
     }
 }

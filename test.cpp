@@ -20,9 +20,9 @@ TEST_CASE("test 1, file", "[simple]"){
                   "Paul_I Peter_III\n"
                   "Alexander_I Paul_I\n"
                   "Nicholaus_I Paul_I\n"
-                  "Anna Nicholaus_I\n"
-                  "Peter_II Peter_I\n"
-                  "Alexei Paul_I";
+                  "Alexander_I Nicholaus_I\n"
+                  "Peter_II Paul_I\n"
+                  "Alexander_I Anna";
     inputPrepare.close();
 
     std::ifstream input( "input.txt", std::ofstream::in);
@@ -35,9 +35,11 @@ TEST_CASE("test 1, file", "[simple]"){
     std::stringstream buffer;
     buffer<<outputCheck.rdbuf();
     outputCheck.close();
-    REQUIRE(buffer.str() == "1 2 0 ");
+    REQUIRE(buffer.str() == "Paul_I\n"
+                            "Peter_I\n"
+                            "Anna\n");
 }
-
+/*
 TEST_CASE("test 002", ""){
     std::ifstream input( "../002", std::ofstream::in);
     std::stringstream output;
@@ -67,41 +69,137 @@ TEST_CASE("test 002", ""){
     "0 0 0 0 0 0 2 0 0 "//X
     );
 }
-
+*/
 TEST_CASE("two trees", ""){
     std::stringstream input, output;
     input << "3\n"
              "A B\n"//B->A
              "C D\n"//D->C
              //Requests:
-             "A B\n"//2
-             "B A\n"//1
-             "C D\n"//2
-             "D C\n"//1
-             "A C\n"//0
-             "A D\n"//0
-             "B C\n"//0
-             "B D\n"//0
-             "C A\n"//0
-             "C B\n"//0
-             "D A\n"//0
-             "D B\n"//0
+             "A B\n"//B
+             "B A\n"//B
+             "C D\n"//D
+             "D C\n"//D
+             "A C\n"//
+             "A D\n"//
+             "B C\n"//
+             "B D\n"//
+             "C A\n"//
+             "C B\n"//
+             "D A\n"//
+             "D B\n"//
              ;
     parseFile(input,output);
 
     REQUIRE(output.str() ==
-            "2 "
-            "1 "
-            "2 "
-            "1 "
-            "0 "
-            "0 "
-            "0 "
-            "0 "
-            "0 "
-            "0 "
-            "0 "
-            "0 "
+            "B\n"
+            "B\n"
+            "D\n"
+            "D\n"
+            "\n"
+            "\n"
+            "\n"
+            "\n"
+            "\n"
+            "\n"
+            "\n"
+            "\n"
+    );
+}
+
+TEST_CASE("same", ""){
+    std::stringstream input, output;
+    input << "2\n"
+             "A B\n"//B->A
+             //Requests:
+             "A A\n"//A
+             "B B\n"//B
+             ;
+    parseFile(input,output);
+
+    REQUIRE(output.str() ==
+            "A\n"
+            "B\n"
+    );
+}
+
+TEST_CASE("root and lowest descendant", ""){
+    std::stringstream input, output;
+    input << "5\n"
+             "B A\n"//A->B
+             "C A\n"//A->C
+             "E C\n"//C->E
+             "D C\n"//C->E
+             //Requests:
+             "A E\n"//A
+             "E A\n"//A
+             ;
+    parseFile(input,output);
+
+    REQUIRE(output.str() ==
+            "A\n"
+            "A\n"
+    );
+}
+
+TEST_CASE("root and middle descendant", ""){
+    std::stringstream input, output;
+    input << "5\n"
+             "B A\n"//A->B
+             "C A\n"//A->C
+             "E C\n"//C->E
+             "D C\n"//C->E
+             //Requests:
+             "A C\n"//A
+             "C A\n"//A
+             ;
+    parseFile(input,output);
+
+    REQUIRE(output.str() ==
+            "A\n"
+            "A\n"
+    );
+}
+
+TEST_CASE("middle and its child", ""){
+    std::stringstream input, output;
+    input << "5\n"
+             "B A\n"//A->B
+             "C A\n"//A->C
+             "E C\n"//C->E
+             "D C\n"//C->E
+             //Requests:
+             "E C\n"//C
+             "C E\n"//C
+             ;
+    parseFile(input,output);
+
+    REQUIRE(output.str() ==
+            "C\n"
+            "C\n"
+    );
+}
+
+TEST_CASE("middle 2 brothers", ""){
+    std::stringstream input, output;
+    input << "5\n"
+             "B A\n"//A->B
+             "C A\n"//A->C
+             "E C\n"//C->E
+             "D C\n"//C->E
+             //Requests:
+             "B C\n"//A
+             "C B\n"//A
+             "E D\n"//C
+             "D E\n"//C
+             ;
+    parseFile(input,output);
+
+    REQUIRE(output.str() ==
+            "A\n"
+            "A\n"
+            "C\n"
+            "C\n"
     );
 }
 

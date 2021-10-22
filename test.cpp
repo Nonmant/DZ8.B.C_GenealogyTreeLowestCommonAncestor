@@ -39,37 +39,27 @@ TEST_CASE("test 1, file", "[simple]"){
                             "Peter_I\n"
                             "Anna\n");
 }
-/*
-TEST_CASE("test 002", ""){
-    std::ifstream input( "../002", std::ofstream::in);
-    std::stringstream output;
+
+TEST_CASE("test 014", ""){
+    BENCHMARK("Longest file"){
+    std::ifstream input( "../014", std::ofstream::in);
+    std::ofstream output("../014.a", std::ofstream::trunc);
+
     parseFile(input,output);
     input.close();
+    output.close();
+    };
 
-    REQUIRE(output.str() ==
-  // I J L M O P T W X
-    "1 0 0 0 0 2 0 0 0 "//A
-  // A J L M O P T W X
-    "2 0 0 0 0 2 0 0 0 "//I
-  // A I L M O P T W X
-    "0 0 0 0 1 2 0 0 0 "//J
-  // A I J M O P T W X
-    "0 0 0 0 0 2 0 2 0 "//L
-  // A I J L O P T W X
-    "0 0 0 0 0 2 0 0 0 "//M
-  // A I J L M P T W X
-    "0 0 2 0 0 2 0 0 0 "//O
-  // A I J L M O T W X
-    "1 1 1 1 1 1 1 1 1 "//P
-  // A I J L M O P W X
-    "0 0 0 0 0 0 2 0 0 "//T
-  // A I J L M O P T X
-    "0 0 0 1 0 0 2 0 0 "//W
-  // A I J L M O P T W
-    "0 0 0 0 0 0 2 0 0 "//X
-    );
+    BENCHMARK("Longest file, only adding"){
+    std::ifstream input( "../014.onlyAdding", std::ofstream::in);
+    std::stringstream output;
+
+    parseFile(input,output);
+    input.close();
+    REQUIRE(output.str() == "");
+    };
 }
-*/
+
 TEST_CASE("two trees", ""){
     std::stringstream input, output;
     input << "3\n"

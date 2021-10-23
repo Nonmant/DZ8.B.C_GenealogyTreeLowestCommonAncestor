@@ -28,7 +28,7 @@ struct TreeNode{
              const std::string & parent){
         ChildIterator iterator;
         if(findDirectChild(parent,iterator)){
-            iterator->second->children.emplace(childName,new TreeNode);
+            iterator->second->children.emplace(childName,child);
             return true;
         }
         for(auto & myChild : children){

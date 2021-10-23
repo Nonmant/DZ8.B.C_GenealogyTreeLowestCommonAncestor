@@ -39,15 +39,29 @@ TEST_CASE("test 1, file", "[simple]"){
                             "Peter_I\n"
                             "Anna\n");
 }
-/*
+
 TEST_CASE("test 014", ""){
+
+    SECTION("Validation"){
+        std::ifstream input( "../014", std::ofstream::in);
+        std::stringstream output;
+
+        parseFile(input,output);
+        input.close();
+
+        std::ifstream outputCheck("../014.a", std::ofstream::in);
+        std::stringstream buffer;
+        buffer<<outputCheck.rdbuf();
+        outputCheck.close();
+        REQUIRE(output.str() == buffer.str());
+    }
+
     BENCHMARK("Longest file"){
     std::ifstream input( "../014", std::ofstream::in);
-    std::ofstream output("../014.a", std::ofstream::trunc);
+    std::stringstream output;
 
     parseFile(input,output);
     input.close();
-    output.close();
     };
 
     BENCHMARK("Longest file, only adding"){
@@ -192,4 +206,3 @@ TEST_CASE("middle 2 brothers", ""){
             "C\n"
     );
 }
-*/

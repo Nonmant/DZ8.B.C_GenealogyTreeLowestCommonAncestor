@@ -11,7 +11,8 @@ struct TreeNode{
              const std::string & childName,
              const std::string & parent){
         if(children.count(parent)){
-            children.at(parent)->children[childName] = new TreeNode;
+            children[parent]->children[childName] = new TreeNode;
+            return true;
         }
         for(auto & myChild : children){
             if(myChild.second->add(child,childName,parent))
@@ -20,7 +21,7 @@ struct TreeNode{
         return false;
     }
 
-    [[nodiscard]]
+    virtual [[nodiscard]]
     std::string getLCA(const std::string & first,
                        const std::string & second){
         std::list<std::pair<const TreeNode *,const std::string &>> path;
@@ -30,10 +31,10 @@ struct TreeNode{
         const std::string & searching =
                 rv == 1 ? second : first;
         TreeNode const * except = nullptr;
-        for(auto node=path.rbegin(); node!=path.rend();++node){
-            if((*node).first->find(searching,except))
-                return (*node).second;
-            except = (*node).first;
+        for(const auto & node : path){
+            if(node.first->find(searching,except))
+                return node.second;
+            except = node.first;
         }
         return {};
     }
@@ -54,7 +55,7 @@ protected:
             path.emplace_back(children.at(first),first);
             return 1;
         }
-        if(children.count(first)){
+        if(children.count(second)){
             path.emplace_back(children.at(second),second);
             return 2;
         }
@@ -110,8 +111,17 @@ public:
             hangingNode = new TreeNode;
         bool added  = TreeNode::add(hangingNode,child,parent);
         if(!added){
-            children[child] = hangingNode;
+            children[parent] = new TreeNode;
+            children[parent]->children[child] = hangingNode;
         }
+    }
+
+    [[nodiscard]]
+    std::string getLCA(const std::string & first,
+                       const std::string & second) override{
+        if(first == second)
+            return first;
+        return TreeNode::getLCA(first,second);
     }
     };
 

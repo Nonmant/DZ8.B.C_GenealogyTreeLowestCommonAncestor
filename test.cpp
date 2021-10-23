@@ -40,6 +40,29 @@ TEST_CASE("test 1, file", "[simple]"){
                             "Anna\n");
 }
 
+TEST_CASE("Reverse order"){
+    std::stringstream input, output;
+    input << "5\n"
+             //descendant ancestor
+             "A B\n"//B->A
+             "C D\n"//D->C
+             "B E\n"//E->B
+             "D E\n"//E->D
+             //Requests:
+             "A B\n"//B
+             "B D\n"//E
+             "A C\n"//E
+            ;
+    parseFile(input,output);
+
+    REQUIRE(output.str() ==
+            "B\n"
+            "E\n"
+            "E\n"
+    );
+}
+
+
 TEST_CASE("test 014", ""){
     BENCHMARK("Longest file"){
     std::ifstream input( "../014", std::ofstream::in);

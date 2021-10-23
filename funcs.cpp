@@ -4,138 +4,73 @@
 #include <bits/stdc++.h>
 
 struct TreeNode{
-    std::unordered_set<TreeNode *> children;
-    std::string name;
-    explicit TreeNode(const std::string & name):
-            name(name){};
-
-    //! @return true if added, false otherwise
-    bool add(TreeNode * child,
-             const std::string & parent){
-        if(parent == name){
-            children.insert(child);
-            return true;
-        }
-        for(auto & myChild : children){
-            if(myChild->add(child,parent))
-                return true;
-        }
-        return false;
-    }
-
-    [[nodiscard]]
-    bool find(const std::string & givenName) const{
-        if(name == givenName)
-            return true;
-        return std::any_of(children.begin(), children.end(),
-                    [givenName](const TreeNode * child){
-                        return child->find(givenName);
-                    });
-    }
-
-    [[nodiscard]]
-    std::string getLCA(const std::string & first,
-                       const std::string & second){
-        std::list<const TreeNode *> path;
-        int rv = findAncestorsOfAny(first,second,path);
-        if(rv == 0)
-            return {};
-        const std::string & searching =
-                rv == 1 ? second : first;
-        TreeNode const * except = nullptr;
-        for(auto node=path.rbegin(); node!=path.rend();++node){
-            if((*node)->find(searching,except))
-                return (*node)->name;
-            except = *node;
-        }
-        return {};
-    }
-
-    ~TreeNode(){
-        for(auto child : children){
-            delete child;
-        }
-        children.clear();
-    }
-
-protected:
-    //! @return 0 - not found, 1 - found first, 2 - found second
-    int findAncestorsOfAny(const std::string & first,
-                            const std::string & second,
-                            std::list<const TreeNode *> & path) const{
-        path.push_back(this);
-        if(name == first){
-            return 1;
-        }
-        if(name == second){
-            return 2;
-        }
-
-        for(const auto & child: children ){
-            int rv = child->findAncestorsOfAny(first,second,path);
-            if(rv!=0)
-                return rv;
-        }
-        path.pop_back();
-        return 0;
-    }
-
-    [[nodiscard]]
-    bool find(const std::string & givenName,
-              const TreeNode * except) const{
-        if(name == givenName)
-            return true;
-        return std::any_of(children.begin(), children.end(),
-                           [givenName, &except](const TreeNode * child){
-                               return child != except && child->find(givenName);
-                           });
-    }
+    TreeNode * parentNode = nullptr;
+    std::string parentKey;
 };
 
 struct Tree{
-    std::unordered_set<TreeNode *> roots;
+    std::map<const std::string, TreeNode *> nodes;
 public:
 
     void add(const std::string & child,
              const std::string & parent){
-        TreeNode * hangingNode = nullptr;
-        for(auto root : roots){
-            if(child == root->name){
-                hangingNode = root;
-                roots.erase(root);
-                break;
-            }
-        }
-        if(hangingNode == nullptr)
-            hangingNode = new TreeNode(child);
-        for(auto root : roots){
-            if(root->add(hangingNode,parent))
-                return;
-        }
+        auto childNode = nodes[child];
+        auto parentNode = nodes[parent];
 
-        auto addedRoot = new TreeNode(parent);
-        addedRoot->add(hangingNode, parent);
-        roots.insert(addedRoot);
+        if(parentNode == nullptr){
+            nodes[parent] = parentNode = new TreeNode;
+        }
+        if(childNode == nullptr){
+            nodes[child] = childNode = new TreeNode;
+        }
+        childNode->parentNode = parentNode;
+        //! @todo duplicating data
+        childNode->parentKey = parent;
     }
 
     [[nodiscard]]
-    std::string getLCA(const std::string & first,
-                       const std::string & second) const {
-        std::string ans;
-        for(auto root : roots){
-            ans = root->getLCA(first,second);
-            if(!ans.empty())
-                return ans;
+    std::vector<std::string *>
+            getNodeAncestors(std::string & nodeKey){
+        std::vector<std::string *> ans;
+
+        TreeNode * node = nodes[nodeKey];
+        if(node == nullptr)
+            return ans;
+        ans.push_back(&nodeKey);
+        while (node->parentNode != nullptr){
+            ans.push_back(&node->parentKey);
+            node = node->parentNode;
         }
         return ans;
     }
 
-    ~Tree(){
-        for(auto root : roots){
-            delete root;
+    [[nodiscard]]
+    //!@todo this one fails
+    std::string getLCA(std::string & first,
+                       std::string & second){
+        std::vector<std::string *> firstAncestors =
+                getNodeAncestors(first);
+        std::vector<std::string *> secondAncestors =
+                getNodeAncestors(second);
+
+        std::string  ans;
+
+        for(auto & firstParent : firstAncestors){
+            for(auto & secondParent : secondAncestors){
+                if(firstParent == secondParent){
+                    ans = * firstParent;
+                }
+            }
         }
-        roots.clear();
-        roots.clear();
+
+        return ans;
+    }
+
+    ~Tree(){
+        for(auto & node : nodes){
+            delete node.second;
+        }
+        nodes.clear();
     }
 };
 

@@ -7,7 +7,7 @@ TEST_CASE("Catch operability", "[simple]"){
 }
 
 #include "funcs.h"
-/*
+
 TEST_CASE("test 014", ""){
 
     SECTION("Validation"){
@@ -41,7 +41,7 @@ TEST_CASE("test 014", ""){
                                               REQUIRE(output.str() == "");
                                           };
 }
-*/
+
 
 TEST_CASE("Reverse order"){
     std::stringstream input, output;

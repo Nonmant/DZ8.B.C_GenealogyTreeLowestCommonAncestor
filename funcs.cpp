@@ -3,15 +3,32 @@
 #include "funcs.h"
 #include <bits/stdc++.h>
 
+class TreeNode;
+
+typedef std::set<std::pair<const std::string,TreeNode *>>::iterator ChildIterator;
+
 struct TreeNode{
-    std::map<const std::string,TreeNode *>children;
+    std::set<std::pair<const std::string,TreeNode *>>children;
+
+    bool findDirectChild(const std::string & name,
+                              ChildIterator & iterator) const{
+        //O(log(N))
+        iterator = children.upper_bound(std::make_pair(name,nullptr));
+        return iterator->first == name;
+    }
+    [[nodiscard]]
+    bool findDirectChild(const std::string & name) const{
+        auto iterator = children.upper_bound(std::make_pair(name,nullptr));
+        return iterator->first == name;
+    }
 
     //! @return true if added, false otherwise
     bool add(TreeNode * child,
              const std::string & childName,
              const std::string & parent){
-        if(children.count(parent)){
-            children[parent]->children[childName] = new TreeNode;
+        ChildIterator iterator;
+        if(findDirectChild(parent,iterator)){
+            iterator->second->children.emplace(childName,new TreeNode);
             return true;
         }
         for(auto & myChild : children){
@@ -21,7 +38,8 @@ struct TreeNode{
         return false;
     }
 
-    virtual [[nodiscard]]
+    [[nodiscard]]
+    virtual
     std::string getLCA(const std::string & first,
                        const std::string & second){
         std::list<std::pair<const TreeNode *,const std::string &>> path;
@@ -51,12 +69,13 @@ protected:
     int findAncestorsOfAny(const std::string & first,
                             const std::string & second,
                             std::list<std::pair<const TreeNode *,const std::string &>> & path) const{
-        if(children.count(first)){
-            path.emplace_back(children.at(first),first);
+        ChildIterator iterator;
+        if(findDirectChild(first,iterator)){
+            path.emplace_back(iterator->second,first);
             return 1;
         }
-        if(children.count(second)){
-            path.emplace_back(children.at(second),second);
+        if(findDirectChild(second,iterator)){
+            path.emplace_back(iterator->second,second);
             return 2;
         }
 
@@ -73,7 +92,7 @@ protected:
 
     [[nodiscard]]
     bool find(const std::string & givenName) const{
-        if(children.count(givenName))
+        if(findDirectChild(givenName))
             return true;
         for(const auto & child : children){
             if(child.second->find(givenName))
@@ -85,7 +104,7 @@ protected:
     [[nodiscard]]
     bool find(const std::string & givenName,
               const TreeNode * except) const{
-        if(children.count(givenName))
+        if(findDirectChild(givenName))
             return true;
         for(const auto & child : children){
             if(child.second == except)
@@ -103,16 +122,18 @@ public:
     void add(const std::string & child,
              const std::string & parent){
         TreeNode * hangingNode = nullptr;
-        if(children.count(child)){
-            hangingNode = children[child];
-            children.erase(child);
+        ChildIterator iterator;
+        if(findDirectChild(child,iterator)){
+            hangingNode = iterator->second;
+            children.erase(iterator);
         }
         if(hangingNode == nullptr)
             hangingNode = new TreeNode;
         bool added  = TreeNode::add(hangingNode,child,parent);
         if(!added){
-            children[parent] = new TreeNode;
-            children[parent]->children[child] = hangingNode;
+            auto parentNode = new TreeNode;
+            parentNode->children.emplace(child,hangingNode);
+            children.emplace(parent,parentNode);
         }
     }
 

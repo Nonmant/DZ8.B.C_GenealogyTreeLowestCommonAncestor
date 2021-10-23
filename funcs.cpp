@@ -11,7 +11,7 @@ struct TreeNode{
              const std::string & childName,
              const std::string & parent){
         if(children.count(parent)){
-            children[parent]->children[childName] = new TreeNode;
+            children[parent]->children[childName] = child;
             return true;
         }
         for(auto & myChild : children){
@@ -21,7 +21,8 @@ struct TreeNode{
         return false;
     }
 
-    virtual [[nodiscard]]
+    [[nodiscard]]
+    virtual
     std::string getLCA(const std::string & first,
                        const std::string & second){
         std::list<std::pair<const TreeNode *,const std::string &>> path;

@@ -64,13 +64,26 @@ TEST_CASE("Reverse order"){
 
 
 TEST_CASE("test 014", ""){
+    SECTION("Longest file verification"){
+        std::ifstream input( "../014", std::ofstream::in);
+        std::stringstream output;
+
+        parseFile(input,output);
+        input.close();
+
+        std::ifstream outputCheck( "../014.a", std::ofstream::in);
+        std::stringstream buffer;
+        buffer<<outputCheck.rdbuf();
+        outputCheck.close();
+        REQUIRE(buffer.str() == output.str());
+    }
+
     BENCHMARK("Longest file"){
     std::ifstream input( "../014", std::ofstream::in);
-    std::ofstream output("../014.a", std::ofstream::trunc);
+    std::stringstream output;
 
     parseFile(input,output);
     input.close();
-    output.close();
     };
 
     BENCHMARK("Longest file, only adding"){

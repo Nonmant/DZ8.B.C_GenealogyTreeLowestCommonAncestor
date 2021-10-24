@@ -1,4 +1,4 @@
-//https://contest.yandex.ru/contest/29403/problems/B/
+//https://contest.yandex.ru/contest/29403/problems/C/
 
 #include "funcs.h"
 #include <bits/stdc++.h>
@@ -29,41 +29,45 @@ public:
     }
 
     [[nodiscard]]
-    std::vector<std::string *>
+    std::list<std::pair<std::string *, TreeNode *>>
             getNodeAncestors(std::string & nodeKey){
-        std::vector<std::string *> ans;
+        std::list<std::pair<std::string *, TreeNode *>> ans;
 
         TreeNode * node = nodes[nodeKey];
         if(node == nullptr)
             return ans;
-        ans.push_back(&nodeKey);
+        ans.emplace_front(&nodeKey,node);
         while (node->parentNode != nullptr){
-            ans.push_back(&node->parentKey);
+            ans.emplace_front(&node->parentKey, node->parentNode);
             node = node->parentNode;
         }
         return ans;
     }
 
     [[nodiscard]]
-    //!@todo this one fails
     std::string getLCA(std::string & first,
                        std::string & second){
-        std::vector<std::string *> firstAncestors =
+        std::list<std::pair<std::string *, TreeNode *>> firstAncestors =
                 getNodeAncestors(first);
-        std::vector<std::string *> secondAncestors =
+        std::list<std::pair<std::string *, TreeNode *>> secondAncestors =
                 getNodeAncestors(second);
 
-        std::string  ans;
+        std::string * ans = nullptr;
 
-        for(auto & firstParent : firstAncestors){
-            for(auto & secondParent : secondAncestors){
-                if(firstParent == secondParent){
-                    ans = * firstParent;
-                }
-            }
+        for(auto firstParent = firstAncestors.begin(),
+                    secondParent = secondAncestors.begin();
+            firstParent != firstAncestors.end() && secondParent != secondAncestors.end();
+            ++firstParent, ++secondParent){
+            if(firstParent->second == secondParent->second)
+                ans = firstParent->first;
+            else
+                break;
         }
 
-        return ans;
+        if(ans == nullptr)
+            return {};
+
+        return *ans;
     }
 
     ~Tree(){
